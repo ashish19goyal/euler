@@ -27,7 +27,7 @@ class rabbitmq
     }
 
     public function publish($message){
-        $msg = new AMQPMessage(json_encode($message));
+        $msg = new AMQPMessage($message);
         $this->channel->basic_publish($msg, $this->queueName, $this->queueName);
     } 
 

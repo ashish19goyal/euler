@@ -16,12 +16,15 @@ class solution142{
     private $queue = null;    
     private $resultFile = null;
     private $squaresMap = null;
+    private $memory = null;
+    private $iteration = 0;
 
     public function __construct()
     {
         $this->queue = new rabbitmq("142_queue");    
         $this->resultFile = fopen("142_result.txt", "w");
         $this->squaresMap = [];
+        $this->memory = [];
     }
 
     public function solution()
@@ -30,10 +33,8 @@ class solution142{
         $msg['x'] = 3;
         $msg['y'] = 2;
         $msg['z'] = 1;
-
-        fwrite($this->resultFile, "Starting processing with - ".json_encode($msg)."\n");
         
-        $this->queue->publish($msg);
+        // $this->enqueue($msg);
         $this->queue->listen(array($this,'perfectSquareCollection'));
     }
 
@@ -66,8 +67,8 @@ class solution142{
             'y' => $msg->y,
             'z' => $msg->z
         ];
-        fwrite($this->resultFile,"Publishing - ".json_encode($msgx)."\n");
-        $this->queue->publish($msgx);
+
+        $this->enqueue($msgx);
 
         if($msg->x - $msg->y > 1){
             $msgy = [
@@ -75,8 +76,7 @@ class solution142{
                 'y' => $msg->y+1,
                 'z' => $msg->z
             ];
-            fwrite($this->resultFile,"Publishing - ".json_encode($msgy)."\n");
-            $this->queue->publish($msgy);        
+            $this->enqueue($msgy);
         }
 
         if($msg->y - $msg->z > 1){
@@ -85,9 +85,20 @@ class solution142{
                 'y' => $msg->y,
                 'z' => $msg->z+1
             ];
-            fwrite($this->resultFile,"Publishing - ".json_encode($msgz)."\n");
-            $this->queue->publish($msgz);        
+            $this->enqueue($msgz);
         }
+    }
+
+    function enqueue($msg){
+        $encoded_msg = json_encode($msg);
+        $this->iteration = ($this->iteration+1) % 9;
+
+        if (!in_array($encoded_msg, $this->memory))
+        {
+            fwrite($this->resultFile,"Publishing - $encoded_msg\n");
+            $this->queue->publish($encoded_msg);
+        }
+        $this->memory[$this->iteration] = $encoded_msg;
     }
 
     function isSquare($number){
