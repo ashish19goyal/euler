@@ -52,5 +52,9 @@ class rabbitmq
         
         $this->close();
     }
+
+    public function stop(){
+        $this->channel->basic_cancel('', false, false);
+    }
 }
 ?>
